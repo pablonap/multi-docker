@@ -1,0 +1,29 @@
+language: generic 
+
+sudo: required
+# Set a copy of docker running
+services:
+    - docker
+
+# Build the image using Dockerfile.dev
+before_install:
+    - docker build -t pablonap/react-test -f ./client/Dockerfile.dev ./client
+    # I could add here for more additional test.
+
+# Tell Travis how to run the test
+script:
+    - docker run -e CI=true pablonap/react-test npm run test
+    # I could add here for more additional test.
+
+after_success:
+    - docker build -t pablonap/multi-client ./client
+    - docker build -t pablonap/multi-nginx ./nginx
+    - docker build -t pablonap/multi-server ./server
+    - docker build -t pablonap/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --pasword-stdin
+    # Take those images and push them to docker hub
+    - docker push pablonap/multi-client
+    - docker push pablonap/multi-nginx
+    - docker push pablonap/multi-server
+    - docker push pablonap/multi-worker
